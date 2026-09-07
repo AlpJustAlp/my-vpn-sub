@@ -1,16 +1,12 @@
-import base64
+import os
 import requests
 
-# Точный и проверенный адрес до raw-файлов (обрати внимание на слэш на конце!)
 BASE_URL = "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/"
-OUTPUT_FILE = "subscription.txt"
-
-# Максимальное количество серверов в одной подписке, чтобы не вешать v2rayN и уложиться в лимиты GitHub
-MAX_LINKS = 2000
+LINES_PER_FILE = 15000
 
 def fetch_and_merge():
-    all_links = set()
-    print("Начинаем сбор конфигураций в облаке открытым текстом...")
+    all_lines = set()
+    print("Просто копируем данные из 25 файлов...")
     
     for i in range(1, 26):
         file_name = f"{i}.txt"
@@ -20,45 +16,45 @@ def fetch_and_merge():
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
             response = requests.get(url, headers=headers, timeout=15)
             
-            print(f"Файл {file_name} -> Статус ответа: {response.status_code}")
-            
             if response.status_code == 200:
                 plain_text = response.text.strip()
                 if not plain_text:
                     continue
                 
-                lines_count = 0
+                # Просто собираем все строки как есть, убирая дубликаты
                 for line in plain_text.splitlines():
-                    link = line.strip()
-                    if link and any(link.startswith(p) for p in ["vless://", "vmess://", "ss://", "ssr://", "trojan://", "hysteria", "tuic"]):
-                        all_links.add(link)
-                        lines_count += 1
-                print(f"Успешно прочитано строк из {file_name}: {lines_count}")
+                    cleaned_line = line.strip()
+                    if cleaned_line:
+                        all_lines.add(cleaned_line)
+                print(f"Скопирован файл: {file_name}")
             else:
-                print(f"Ошибка скачивания {file_name}. Код: {response.status_code}")
+                print(f"Не удалось открыть {file_name}. Статус: {response.status_code}")
                     
         except Exception as e:
-            print(f"Не удалось обработать файл {file_name}: {e}")
+            print(f"Ошибка при копировании {file_name}: {e}")
 
-    print(f"\nВсего уникальных прокси найдено: {len(all_links)}")
+    total_lines = len(all_lines)
+    print(f"\nВсего уникальных строк скопировано: {total_lines}")
 
-    if not all_links:
-        print("Критическая ошибка: Конфигов нет.")
-        raise ValueError("Скрипт собрал 0 подписок.")
+    if total_lines == 0:
+        print("Критическая ошибка: Данных нет.")
+        raise ValueError("Скрипт скопировал 0 строк.")
 
-    # Ограничиваем список, чтобы v2rayN переварил его
-    links_list = list(all_links)
-    if len(links_list) > MAX_LINKS:
-        links_list = links_list[:MAX_LINKS]
-
-    # ВНИМАНИЕ: Склеиваем чистый открытый текст БЕЗ Base64 шифрования!
-    merged_plain_text = "\n".join(links_list)
+    # Переводим в список, чтобы нарезать по 15 000 строк
+    lines_list = list(all_lines)
     
-    # Записываем как есть
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(merged_plain_text)
+    # Режем на файлы и сохраняем
+    file_counter = 1
+    for start_idx in range(0, total_lines, LINES_PER_FILE):
+        end_idx = start_idx + LINES_PER_FILE
+        chunk = lines_list[start_idx:end_idx]
         
-    print(f"Файл успешно сохранен в ОТКРЫТОМ виде! Записано {len(links_list)} строк.")
+        output_file = f"{file_counter}.txt"
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write("\n".join(chunk))
+            
+        print(f"Записан файл {output_file} (строк: {len(chunk)})")
+        file_counter += 1
 
 if __name__ == "__main__":
     fetch_and_merge()
