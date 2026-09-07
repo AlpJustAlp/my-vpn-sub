@@ -1,3 +1,4 @@
+import os
 import requests
 
 BASE_URL = "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/"
