@@ -6,11 +6,11 @@ BASE_URL = "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/h
 OUTPUT_FILE = "subscription.txt"
 
 # Максимальное количество серверов в одной подписке, чтобы не вешать v2rayN и уложиться в лимиты GitHub
-MAX_LINKS = 50000
+MAX_LINKS = 20000
 
 def fetch_and_merge():
     all_links = set()
-    print("Начинаем сбор конфигураций в облаке...")
+    print("Начинаем сбор конфигураций в облаке открытым текстом...")
     
     for i in range(1, 26):
         file_name = f"{i}.txt"
@@ -46,20 +46,19 @@ def fetch_and_merge():
         print("Критическая ошибка: Конфигов нет.")
         raise ValueError("Скрипт собрал 0 подписок.")
 
-    # Обрезаем массив до разумного количества, если серверов слишком много
+    # Ограничиваем список, чтобы v2rayN переварил его
     links_list = list(all_links)
     if len(links_list) > MAX_LINKS:
-        print(f"Внимание: Ссылок слишком много! Ограничиваем подписку до первых {MAX_LINKS} серверов.")
         links_list = links_list[:MAX_LINKS]
 
-    # Объединяем итоговый список
+    # ВНИМАНИЕ: Склеиваем чистый открытый текст БЕЗ Base64 шифрования!
     merged_plain_text = "\n".join(links_list)
-    final_base64 = base64.b64encode(merged_plain_text.encode("utf-8")).decode("utf-8")
     
+    # Записываем как есть
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(final_base64)
+        f.write(merged_plain_text)
         
-    print(f"Файл успешно сохранен! В подписку упало ровно {len(links_list)} серверов.")
+    print(f"Файл успешно сохранен в ОТКРЫТОМ виде! Записано {len(links_list)} строк.")
 
 if __name__ == "__main__":
     fetch_and_merge()
