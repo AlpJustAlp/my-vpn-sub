@@ -46,6 +46,13 @@ def fetch_and_merge():
         f.write(merged_plain_text)
         
     print(f"Готово! Все уникальные прокси слиты в один файл: {OUTPUT_FILE}")
+    
+    print("\nУдаляем старые мусорные файлы...")
+    for i in range(1, 45):  # Проверяем файлы с 1.txt по 44.txt
+        trash_file = f"{i}.txt"
+        if os.path.exists(trash_file):
+            os.remove(trash_file)
+            print(f"Удален мусорный файл: {trash_file}")
 
 if __name__ == "__main__":
     fetch_and_merge()
