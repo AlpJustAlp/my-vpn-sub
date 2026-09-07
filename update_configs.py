@@ -5,13 +5,15 @@ import requests
 BASE_URL = "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/"
 OUTPUT_FILE = "subscription.txt"
 
+# Максимальное количество серверов в одной подписке, чтобы не вешать v2rayN и уложиться в лимиты GitHub
+MAX_LINKS = 50000
+
 def fetch_and_merge():
     all_links = set()
     print("Начинаем сбор конфигураций в облаке...")
     
     for i in range(1, 26):
         file_name = f"{i}.txt"
-        # Правильно и безопасно склеиваем ссылку
         url = f"{BASE_URL}{file_name}"
         
         try:
@@ -23,40 +25,41 @@ def fetch_and_merge():
             if response.status_code == 200:
                 plain_text = response.text.strip()
                 if not plain_text:
-                    print(f"Предупреждение: файл {file_name} пустой внутри.")
                     continue
                 
                 lines_count = 0
-                # Файлы уже текстовые, просто читаем их построчно
                 for line in plain_text.splitlines():
                     link = line.strip()
-                    # Сохраняем только строчки, которые начинаются с протоколов VPN
                     if link and any(link.startswith(p) for p in ["vless://", "vmess://", "ss://", "ssr://", "trojan://", "hysteria", "tuic"]):
                         all_links.add(link)
                         lines_count += 1
-                print(f"Успешно извлечено ссылок из {file_name}: {lines_count}")
+                print(f"Успешно прочитано строк из {file_name}: {lines_count}")
             else:
-                print(f"Не удалось скачать {file_name}. Статус: {response.status_code}")
+                print(f"Ошибка скачивания {file_name}. Код: {response.status_code}")
                     
         except Exception as e:
-            print(f"Ошибка при обработке {file_name} (Ссылка: {url}): {e}")
+            print(f"Не удалось обработать файл {file_name}: {e}")
 
-    print(f"\nВсего уникальных ссылок собрано: {len(all_links)}")
+    print(f"\nВсего уникальных прокси найдено: {len(all_links)}")
 
     if not all_links:
-        print("Критическая ошибка: Массив ссылок пуст! Записывать нечего.")
-        raise ValueError("Скрипт не смог собрать данные")
+        print("Критическая ошибка: Конфигов нет.")
+        raise ValueError("Скрипт собрал 0 подписок.")
 
-    # Объединяем все чистые ссылки через перенос строки
-    merged_plain_text = "\n".join(all_links)
-    
-    # Кодируем ИТОГОВЫЙ результат в Base64 для v2rayN
+    # Обрезаем массив до разумного количества, если серверов слишком много
+    links_list = list(all_links)
+    if len(links_list) > MAX_LINKS:
+        print(f"Внимание: Ссылок слишком много! Ограничиваем подписку до первых {MAX_LINKS} серверов.")
+        links_list = links_list[:MAX_LINKS]
+
+    # Объединяем итоговый список
+    merged_plain_text = "\n".join(links_list)
     final_base64 = base64.b64encode(merged_plain_text.encode("utf-8")).decode("utf-8")
     
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write(final_base64)
         
-    print("Файл subscription.txt успешно перезаписан плотными данными!")
+    print(f"Файл успешно сохранен! В подписку упало ровно {len(links_list)} серверов.")
 
 if __name__ == "__main__":
     fetch_and_merge()
