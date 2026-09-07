@@ -6,7 +6,7 @@ BASE_URL = "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/h
 OUTPUT_FILE = "subscription.txt"
 
 # Максимальное количество серверов в одной подписке, чтобы не вешать v2rayN и уложиться в лимиты GitHub
-MAX_LINKS = 20000
+MAX_LINKS = 2000
 
 def fetch_and_merge():
     all_links = set()
