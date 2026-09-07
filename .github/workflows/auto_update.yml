@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write    # Права на запись
+      contents: write    # Права на запись изменений
 
     steps:
     - name: Checkout repository
@@ -21,16 +21,17 @@ jobs:
       with:
         python-version: '3.x'
 
+    - name: Install dependencies
+      run: pip install requests
+
     - name: Run update script
       run: |
         python update_configs.py
-        # Проверяем, создался ли файл. Если нет — создаем пустой, чтобы Git не ругался
-        if [ ! -f subscription.txt ]; then touch subscription.txt; f
+        if [ ! -f subscription.txt ]; then touch subscription.txt; fi
 
     - name: Commit and push changes
       run: |
         git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@://github.com"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add subscription.txt
-        # Пушим только если есть реальные изменения в файле
         git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update subscriptions" && git push)
