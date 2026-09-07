@@ -2,15 +2,15 @@ name: Auto Update VPN Subscriptions
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Запуск ровно в 00 минут каждого часа
-  workflow_dispatch:     # Кнопка для ручного запуска в любое время
+    - cron: '0 * * * *'  # Запуск каждый час
+  workflow_dispatch:     # Кнопка для ручного запуска
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write    # Даем роботу права на запись изменений
+      contents: write    # Права на запись
 
     steps:
     - name: Checkout repository
@@ -22,11 +22,15 @@ jobs:
         python-version: '3.x'
 
     - name: Run update script
-      run: python update_configs.py
+      run: |
+        python update_configs.py
+        # Проверяем, создался ли файл. Если нет — создаем пустой, чтобы Git не ругался
+        if [ ! -f subscription.txt ]; then touch subscription.txt; f
 
     - name: Commit and push changes
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@://github.com"
         git add subscription.txt
+        # Пушим только если есть реальные изменения в файле
         git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update subscriptions" && git push)
