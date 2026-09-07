@@ -21,7 +21,6 @@ def fetch_and_merge():
                 if not plain_text:
                     continue
                 
-                # Собираем абсолютно все строки, дубликаты уберутся автоматически
                 for line in plain_text.splitlines():
                     cleaned_line = line.strip()
                     if cleaned_line:
@@ -45,9 +44,9 @@ def fetch_and_merge():
     
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write(merged_plain_text)
-        
     print(f"Готово! Все уникальные прокси слиты в один файл: {OUTPUT_FILE}")
-    
+
+    # --- БЛОК АВТОМАТИЧЕСКОЙ ОЧИСТКИ МУСОРА ---
     print("\nУдаляем старые мусорные файлы...")
     for i in range(1, 45):  # Проверяем файлы с 1.txt по 44.txt
         trash_file = f"{i}.txt"
