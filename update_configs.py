@@ -3,6 +3,7 @@ import requests
 
 BASE_URL = "https://raw.githubusercontent.com/AvenCores/goida-vpn-configs/refs/heads/main/githubmirror/"
 OUTPUT_FILE = "subscription.txt"
+MAX_FILE_SIZE_MB = 90
 
 def fetch_and_merge():
     all_lines = set()
@@ -39,16 +40,32 @@ def fetch_and_merge():
         print("Критическая ошибка: Строк нет.")
         raise ValueError("Скрипт скопировал 0 строк.")
 
-    # Объединяем весь этот чистый текст в один файл
-    merged_plain_text = "\n".join(all_lines)
+    # Переводим в список для возможности безопасной обрезки
+    lines_list = list(all_lines)
     
+    # Умная подгонка под лимит размера файла
+    max_bytes = MAX_FILE_SIZE_MB * 1024 * 1024
+    current_text = "\n".join(lines_list)
+    
+    # Если текст весит больше лимита, потихоньку откусываем строки с конца
+    if len(current_text.encode('utf-8')) > max_bytes:
+        print(f"Внимание: Общий объем превышает {MAX_FILE_SIZE_MB} МБ. Начинаем обрезку строк...")
+        while len(current_text.encode('utf-8')) > max_bytes and lines_list:
+            # Удаляем последние 500 строк за раз для ускорения процесса
+            lines_list = lines_list[:-500]
+            current_text = "\n".join(lines_list)
+        print(f"Файл успешно ограничен! Осталось строк: {len(lines_list)}")
+
+    # Записываем итоговый оптимизированный текст
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(merged_plain_text)
-    print(f"Готово! Все уникальные прокси слиты в один файл: {OUTPUT_FILE}")
+        f.write(current_text)
+        
+    final_size_mb = os.path.getsize(OUTPUT_FILE) / (1024 * 1024)
+    print(f"Готово! Итоговый файл {OUTPUT_FILE} весит: {final_size_mb:.2f} МБ")
 
     # --- БЛОК АВТОМАТИЧЕСКОЙ ОЧИСТКИ МУСОРА ---
     print("\nУдаляем старые мусорные файлы...")
-    for i in range(1, 45):  # Проверяем файлы с 1.txt по 44.txt
+    for i in range(1, 45):
         trash_file = f"{i}.txt"
         if os.path.exists(trash_file):
             os.remove(trash_file)
