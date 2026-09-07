@@ -2,15 +2,15 @@ name: Auto Update VPN Subscriptions
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Запуск каждый час
-  workflow_dispatch:     # Кнопка для ручного запуска
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write    # Права на запись изменений
+      contents: write
 
     steps:
     - name: Checkout repository
@@ -25,9 +25,7 @@ jobs:
       run: pip install requests
 
     - name: Run update script
-      run: |
-        python update_configs.py
-        if [ ! -f subscription.txt ]; then touch subscription.txt; fi
+      run: python update_configs.py
 
     - name: Commit and push changes
       run: |
